@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>n-body Gravity Simulation</title>
+  </head>
+  <body leftmargin="24" text="#444" bgcolor="#f1f3ff" topmargin="24">
+    <h1 align="left">N-body Gravity Simulation</h1>
+    <h2>
+      <b>Introduction</b>
+    </h2>
+    <font face="Verdana">
+      <p>
+        <font size="6" face="Times New Roman">The</font> Universe is governed by
+        the laws of physics, and one of the most fundamental forces that shapes
+        the cosmos is gravity. From the orbits of planets around their parent
+        stars to the stunning spirals of galaxies, gravity is an invisible force
+        that dictates the movement of celestial bodies. Understanding the
+        intricacies of this force is a pursuit that has captivated scientists
+        and astronomers for centuries, leading to the development of various
+        theories and models. One of the most intriguing and computationally
+        challenging approaches to simulate gravity's effects on multiple
+        interacting objects is the n-body gravity simulation. In this article,
+        we will delve into the world of n-body gravity simulations, by building
+        a 2 dimensional gravity simulation ourselves.
+      </p>
+    </font>
+    <hr color="#1e1841" />
+    <h2 align="left">
+      <b>Prerequisites</b>
+    </h2>
+    <font face="Verdana">
+      <p>
+        The topics that have been discussed in this article can be implemented
+        in code by any capable programmer in their favourite language. However,
+        the specific implementation that was used in this article uses the
+        following tech:
+        <b>
+          <ol>
+            <li>HTML</li>
+            <li>CSS</li>
+            <li>Typescript</li>
+            <ul type="square">
+              <i>
+                <li>Base Language Features.</li>
+                <li>Built-in Math Methods.</li>
+                <li>Canvas2DAPI (For rendering).</li>
+              </i>
+            </ul>
+          </ol>
+        </b>
+      </p>
+    </font>
+    <hr color="#1e1841" />
+    <h2><b>Setting Up</b></h2>
+    <font face="Verdana">
+      <p>
+        Firstly, we have to create a development environment using nodejs so
+        that we can use typescript. Since the steps for setting up differ in
+        Windows, Linux or OS X, I recommend using
+        <a href="https://vitejs.dev/guide/">this</a> guide to set up your
+        development environment.
+      </p>
+    </font>
+    <hr color="#1e1841" />
+    <h2>
+      <b>Implementation</b>
+    </h2>
+    <h3>The Vector 2 class</h3>
+    <font face="Verdana">
+      <p>
+        In our simulation, we will use Vectors to represent the physical
+        properties of the particles. So, lets begin by defining a Vector 2 class
+      </p>
+      <img
+        src="/assets/Vector2-class-dark-f7552e6f.png"
+        alt="Vector 2 Class Definition"
+        width="360px"
+        align="center"
+      />
+      <p>
+        While we are at it, let's also add a few methods to our Vector 2 class
+        that will be used later in our simulation.
+      </p>
+      <img
+        src="/assets/Vec2-methods-dark-a102d4af.png"
+        alt="Vector 2 Class Methods"
+        width="360px"
+        align="center"
+      />
+      <p>
+        Out of all the methods, the most interesting implementation might be of
+        the <font face="Monospace"><i>normalise</i></font> method. Instead of
+        directly dividing the components of the vector by it's length, the
+        method instead multiplies or scales the components of the vector by its
+        inversed length which is essentially the same thing, but this way, the
+        method run is a little more performant as computers perform
+        multiplication operations faster than division operations. And this
+        becomes noticable when the simulation is scaled.
+      </p>
+    </font>
+    <hr />
+    <h3>The Particle class</h3>
+    <font face="Verdana">
+      <p>
+        In our simulation, we will use particles that will be affected by each
+        other's gravity. Let's define a particle.
+      </p>
+      <img
+        src="/assets/Particle-def-dark-aac219f0.png"
+        alt="Particle class definition"
+        width="360px"
+        align="center"
+      />
+      <br /><br />
+      <p>
+        We have also defined a few default values that our particles will use in
+        case they're not defined when a particle class is instantiated.
+      </p>
+    </font>
+    <hr />
+    <h3>The Physics of Gravity Simulations</h3>
+    <font face="Verdana">
+      <p>
+        Now that we have our vector and particle classes, we can start building
+        our Physics Stepper that calculates the gravitational force and updates
+        the positions of our particles. But first, we have to understand the
+        formula for gravity. Which is defined as
+      </p>
+      <p align="center">
+        <font color="#333" size="5" face="Times New Roman">
+          F = (G × m<sub>1</sub> × m<sub>2</sub>)/r<sup>2</sup>
+        </font>
+      </p>
+      <p>
+        Where <i>G</i> is the Gravitational Constant, <i>m<sub>1</sub></i> and
+        <i>m<sub>2</sub></i> are the respective masses of two particles, and
+        <i>r</i> is the distance between the two particles. The Gravitational
+        Constant approximately equals to
+      </p>
+      <p align="center">
+        <font color="#333" size="5" face="Times New Roman">
+          G = 6.6743 × 10<sup>-11</sup>m<sup>3</sup>kg<sup>-1</sup>s<sup
+            >-2</sup
+          >
+        </font>
+      </p>
+      <p>
+        But before we start use this formula, we need to compute the distance
+        between the two particles. For which, we can use the distance formula,
+        that is
+      </p>
+      <p align="center">
+        <font color="#333" size="5" face="Times New Roman">
+          r = &radic;((x<sub>2</sub> - x<sub>1</sub>)<sup>2</sup> + ((y<sub
+            >2</sub
+          >
+          - y<sub>1</sub>)<sup>2</sup>)
+        </font>
+      </p>
+      <p>
+        But, there is a better way which uses the length of the direction from
+        p<sub>1</sub> to p<sub>2</sub>. If you look at it, we are essentially
+        performing the same calculations as we would if we were to use the
+        distance formula but this is much simpler. We would computer the
+        direction (<i>d</i>) and distance (<i>r</i>) as
+      </p>
+      <p align="center">
+        <font color="#333" size="5" face="Times New Roman">
+          d' = p<sub>1</sub> - p<sub>2</sub>
+          <br />
+          r = |d'|
+          <br />
+          d = d' / |d'|
+        </font>
+      </p>
+      <p>
+        Now that we have the distance, we can apply the Gravity formula to
+        obtain the Gravitational Force (<i>F</i>) experienced by
+        <i>P<sub>1</sub></i
+        >. Then, we can compute acceleration (<i>a</i>) by restructuring the
+        formula for Force (<i>F</i>) which is <i><b>F = m × a</b></i> as
+      </p>
+      <p align="center">
+        <font color="#333" size="5" face="Times New Roman"> a = F / m </font>
+      </p>
+      <p>
+        Finally, we can multiply acceleration <i>a(t + 1)</i> with direction
+        <i>(d)</i> and add the result to velocity <i>v(t)</i> to get the new
+        velocity as:
+      </p>
+      <p align="center">
+        <font color="#333" size="5" face="Times New Roman">
+          v(t + 1) = v(t) + a(t + 1) × d
+        </font>
+      </p>
+      Then we can compute the new position using:
+      <p align="center">
+        <font color="#333" size="5" face="Times New Roman">
+          x(t + 1) = x(t) + v(t + 1) × &Delta;t
+        </font>
+      </p>
+      <p>
+        Let's implement this in code after we defining a few constants namely
+        the Gravitational Constant (<i>G</i>), average particle mass
+        (<i>avg_mass</i>), the deviation for average particle mass
+        (<i>mass_deviation</i>), a radius for our particles and a fixed timestep
+        that we will later compute ourselves. Most of these values will be used
+        later when we create our particles.
+      </p>
+      <img
+        src="/assets/Constants-dark-e4388d2e.png"
+        alt="Constants"
+        width="360px"
+        align="center"
+      />
+      <p>And here is the implementation of the above explained math:</p>
+      <img
+        src="/assets/translateToNewPosition-def-dark-e56817c5.png"
+        alt="Constants"
+        width="360px"
+        align="center"
+      />
+      <p>
+        Before we continue, let's see what happens to the other values if we
+        change the mass of p<sub>1</sub>, while the mass of the other particle
+        p<sub>2</sub> stays constant at 10<sup>8</sup>kg.
+      </p>
+      <table borderColor="#323139" width="96%" align="center" rules="all">
+        <caption>
+          <b>Variation in mass</b>
+        </caption>
+        <thead bgColor="#efe7fe">
+          <th>Distance</th>
+          <th>Mass</th>
+          <th>Force</th>
+          <th>Acceleration</th>
+        </thead>
+        <tbody align="center">
+          <tr>
+            <td>10</td>
+            <td>10<sup>4</sup></td>
+            <td>0.66743</td>
+            <td>vec2(-0.000066743, 0.000066743)</td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td>10<sup>5</sup></td>
+            <td>6.6743</td>
+            <td>vec2(-0.000066743, 0.000066743)</td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td>10<sup>6</sup></td>
+            <td>66.743</td>
+            <td>vec2(-0.000066743, 0.000066743)</td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td>12<sup>7</sup></td>
+            <td>2391.522361344</td>
+            <td>vec2(-0.000066743, 0.000066743)</td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td>14<sup>8</sup></td>
+            <td>98498.5889646</td>
+            <td>vec2(-0.000066743, 0.000066743)</td>
+          </tr>
+        </tbody>
+        <tfoot bgColor="#ff5752" color="#fff">
+          <td colspan="4" align="center">
+            <font face="Monospace" color="#fff">
+              Table 1: Real data obtained from simulation.
+            </font>
+          </td>
+        </tfoot>
+      </table>
+      <p>
+        In the above table, we see that even though the force <i>F</i> keeps on
+        increasing, it doesn't affect the acceleration. So, we have accidentally
+        proved that objects experience the same acceleration due to gravity
+        regardless of mass. This is because the force is divided by mass when we
+        calculate acceleration. So that cancels out the effect mass has on
+        Force. Let's conduct another experiment where we exponentially increase
+        the length between two particles without changing any other parameters
+        and see how that affects the Gravitational Force.
+      </p>
+      <table borderColor="#323139" width="96%" align="center" rules="all">
+        <caption>
+          <b>Variation in distance</b>
+        </caption>
+        <thead bgColor="#efe7fe">
+          <th>Mass</th>
+          <th>Position</th>
+          <th>Distance</th>
+          <th>Force</th>
+        </thead>
+        <tbody align="center">
+          <tr>
+            <td>10<sup>10</sup></td>
+            <td>vec2(100, 50)</td>
+            <td>10<sup>2</sup></td>
+            <td>667430</td>
+          </tr>
+          <tr>
+            <td>10<sup>10</sup></td>
+            <td>vec2(1000, 500)</td>
+            <td>10<sup>3</sup></td>
+            <td>6674.3</td>
+          </tr>
+          <tr>
+            <td>10<sup>10</sup></td>
+            <td>vec2(10000, 5000)</td>
+            <td>10<sup>4</sup></td>
+            <td>66.743</td>
+          </tr>
+          <tr>
+            <td>10<sup>10</sup></td>
+            <td>vec2(100000, 50000)</td>
+            <td>10<sup>5</sup></td>
+            <td>0.66743</td>
+          </tr>
+          <tr>
+            <td>10<sup>10</sup></td>
+            <td>vec2(1000000, 500000)</td>
+            <td>10<sup>6</sup></td>
+            <td>0.0066743</td>
+          </tr>
+        </tbody>
+        <tfoot bgColor="#ff5752" color="#fff">
+          <td colspan="4" align="center">
+            <font face="Monospace" color="#fff">
+              Table 2: Real data obtained from simulation.
+            </font>
+          </td>
+        </tfoot>
+      </table>
+      <p>
+        We can also use this function to find out the acceleration due to
+        gravity on earth (<i>g</i>), by using real measurements of the earth.
+      </p>
+      <img
+        src="/assets/g-dark-dd245bbb.png"
+        alt="Acceleration due to gravity on earth"
+        width="360px"
+        align="center"
+      />
+      <p>
+        Since the result we obtained is very close to the real value of
+        <i>g</i>, We can say that our implementation is correct. We now have
+        only two things left to do, render our particles to the screen, and
+        create an update loop. Let's write some code to spread the particles on
+        the screen using the constants we defined earlier and two new constants
+        which we will use to make the spread area circular, we will also colour
+        our particles using hsl, and then use the Canvas2DAPI to render them to
+        the screen.
+      </p>
+      <img
+        src="/assets/particle-initiator-dark-555f85f5.png"
+        alt="Particle Initiator code"
+        width="360px"
+        align="center"
+      />
+      <p>
+        For rendering, we need to add a canvas element with a id "canvas" to our
+        html, then we can reference that canvas using typescript. We can use css
+        for resizing the canvas. (The html and css code have not been shown)
+      </p>
+      <img
+        src="/assets/canvas-init-3b0362b7.png"
+        alt="Particle Initiator code"
+        width="360px"
+        align="center"
+      />
+      <p>
+        The above code only gets a canvas from the DOM, resizes it and initiates
+        a Canvas2DRenderingContext. For actually drawing the particles to the
+        screen, we need to define a function called `render` in my
+        implementation and then call the render method on each particle.
+      </p>
+      <img
+        src="/assets/render-def-dark-1087cc14.png"
+        alt="Particle Initiator code"
+        width="360px"
+        align="center"
+      />
+      <p>
+        Finally, we have got the particles rendering on our screen, the colours
+        appear in a nice Gradient because we set the hue of the colour based on
+        <i>theta</i>.
+      </p>
+      <img
+        src="/assets/first-output-7bb450d4.png"
+        alt="Particle Initiator code"
+        width="360px"
+        align="center"
+      />
+      <p>
+        At last, we can write our loop function that computes deltatime
+        <i>dt</i>, updates the position of our particles and renders them to the
+        screen after clearing it.
+      </p>
+      <img
+        src="/assets/final-dark-23c3f836.png"
+        alt="Particle Initiator code"
+        width="360px"
+        align="center"
+      />
+      <p>And with that, we have a working n-body Gravity Simulation.</p>
+    </font>
+    <hr color="#1e1841" />
+    <h2>
+      <b>Limitations</b>
+    </h2>
+    <font face="Verdana">
+      <p>
+        While our algorithm is very accurate, it is also very inefficient. It
+        has a Time Complexity of O(n<sub>2</sub>) because we used a naive
+        implementation. However, there are ways to improve the performance of
+        this simulation by a lot. A few solutions to improve the efficiency of
+        this algorithm and speed up rendering have been discussed below
+      </p>
+      <dl>
+        <dt>
+          <h4>Rendering on the GPU using WebGL or WebGPU.</h4>
+        </dt>
+        <dd>
+          The Canvas2DAPI is simple to use, however it uses the CPU for
+          rendering. And even in some cases when it uses the GPU, it still draws
+          the particles on the screen one by one. But, WebAPIs like WebGL take
+          advantage of the device's GPU's Parallelization and is able to draw 20
+          million particles in one second in even a slow computer. WebGPU is an
+          even better choice however WebGPU is not fully supported by all
+          browsers yet.
+        </dd>
+        <dt>
+          <h4>Barnes Hut Algorithm</h4>
+        </dt>
+        <dd>
+          The Barnes Hut algorithm groups together bodies which are at a
+          sufficient distance from each other using a data structure called a
+          Quadtree. This algorithm reduces our time complexity from
+          O(n<sup>2</sup>) to O(n log n) which is a very significant
+          improvement.
+        </dd>
+        <dt>
+          <h4>Spatial Grid</h4>
+        </dt>
+        <dd>
+          We could also use a more efficient method than Barnes Hut Algorithm,
+          where we group the bodies together using a Binary-tree like data
+          structure which is split based on the Arithmetic mean of the positions
+          of the bodies inside it. We can use a tree walking algorithm to
+          simulate our particles.
+        </dd>
+        <dt>
+          <h4>GPU Spatial Grid</h4>
+        </dt>
+        <dd>
+          We could divide our simulation's bounds into several smaller parts or
+          a grid, and then use a GPU sorting algorithm like
+          <a href="https://en.m.wikipedia.org/wiki/Bitonic_sorter"
+            >Batcher’s Bitonic Sort</a
+          >
+          and group our particles. This method can provide significant
+          improvements by using the GPU's massive parallelization capabilities
+          to it's advantage.
+        </dd>
+      </dl>
+    </font>
+  </body>
+</html>
